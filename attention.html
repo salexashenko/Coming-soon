@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Complex Adaptive Idea Spread Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+</head>
+
+<body>
+    <script>
+        let ideas = [];
+        let numIdeas = 100;
+        let maxConnectionDistance = 100;
+        let maxConnections = 5;
+        let adaptationRate = 0.01;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            colorMode(HSB, 360, 100, 100, 100);
+            noStroke();
+
+            // Generate random data for ideas
+            for (let i = 0; i < numIdeas; i++) {
+                ideas.push(createIdea());
+            }
+        }
+
+        function draw() {
+            background(0, 0, 10, 80);
+
+            // Update and draw ideas
+            for (let i = 0; i < ideas.length; i++) {
+                let idea = ideas[i];
+
+                // Update position based on fluid dynamics
+                idea.x += idea.vx;
+                idea.y += idea.vy;
+
+                // Bounce off the edges of the canvas
+                if (idea.x < 0 || idea.x > width) {
+                    idea.vx *= -1;
+                }
+                if (idea.y < 0 || idea.y > height) {
+                    idea.vy *= -1;
+                }
+
+                // Draw idea node
+                fill(idea.color);
+                let size = map(idea.fitness, 0, 1, 10, 50);
+                ellipse(idea.x, idea.y, size);
+
+                // Draw connection lines
+                stroke(idea.color);
+                let lineWeight = map(idea.fitness, 0, 1, 1, 5);
+                strokeWeight(lineWeight);
+                for (let j = 0; j < ideas.length; j++) {
+                    if (i !== j) {
+                        let other = ideas[j];
+                        let distance = dist(idea.x, idea.y, other.x, other.y);
+                        if (distance < maxConnectionDistance && idea.connections < maxConnections) {
+                            line(idea.x, idea.y, other.x, other.y);
+                            idea.connections++;
+                        }
+                    }
+                }
+                idea.connections = 0;
+            }
+
+            // Draw background pattern
+            drawBackgroundPattern();
+
+            // Adapt ideas
+            for (let i = 0; i < ideas.length; i++) {
+                let idea = ideas[i];
+                if (random() < adaptationRate) {
+                    idea.fitness += random(-0.1, 0.1);
+                    idea.fitness = constrain(idea.fitness, 0, 1);
+                    idea.color = color(random(360), 80, 100, 80);
+                }
+            }
+        }
+
+        function createIdea() {
+            return {
+                fitness: random(0.2, 1),
+                controversy: random(),
+                framing: floor(random(3)),
+                x: random(width),
+                y: random(height),
+                vx: random(-2, 2),
+                vy: random(-2, 2),
+                color: color(random(360), 80, 100, 80),
+                connections: 0,
+            };
+        }
+
+        function drawBackgroundPattern() {
+            let patternSize = 50;
+            let patternGap = 20;
+
+            for (let x = 0; x < width; x += patternSize + patternGap) {
+                for (let y = 0; y < height; y += patternSize + patternGap) {
+                    let hue = map(x + y, 0, width + height, 0, 360);
+                    fill(hue, 80, 100, 50);
+                    beginShape();
+                    vertex(x, y);
+                    vertex(x + patternSize, y);
+                    vertex(x + patternSize / 2, y + patternSize);
+                    endShape(CLOSE);
+                }
+            }
+        }
+
+        function mousePressed() {
+            // Add a new idea on mouse click
+            ideas.push(createIdea());
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+
+</html>
